@@ -18,14 +18,14 @@ const Footer = () => {
         ) : (
           <div className='custom-footer'>
             <a
-              href='https://github.com/songquanpeng/gin-template'
+              href='https://github.com/Edward-Elric233/leapp-manager'
               target='_blank'
             >
               {systemName} {process.env.REACT_APP_VERSION}{' '}
             </a>
             由{' '}
-            <a href='https://github.com/songquanpeng' target='_blank'>
-              JustSong
+            <a href='https://github.com/Edward-Elric233' target='_blank'>
+              Edward-Elric233
             </a>{' '}
             构建，源代码遵循{' '}
             <a href='https://opensource.org/licenses/mit-license.php'>

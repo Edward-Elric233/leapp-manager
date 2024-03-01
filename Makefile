@@ -3,3 +3,6 @@ run:
 
 list:
 	docker ps
+
+build:
+	docker build -t edwardelric233/leapp-manager .

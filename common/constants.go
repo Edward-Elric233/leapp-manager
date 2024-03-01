@@ -8,7 +8,7 @@ import (
 
 var StartTime = time.Now().Unix() // unit: second
 var Version = "v0.0.0"            // this hard coding will be replaced automatically when building, no need to manually change
-var SystemName = "项目模板"
+var SystemName = "Leapp manager"
 var ServerAddress = "http://localhost:3000"
 var Footer = ""
 var HomePageLink = ""
@@ -16,7 +16,7 @@ var HomePageLink = ""
 // Any options with "Secret", "Token" in its key won't be return by GetOptions
 
 var SessionSecret = uuid.New().String()
-var SQLitePath = "gin-template.db"
+var SQLitePath = "Leapp-manager.db"
 
 var OptionMap map[string]string
 var OptionMapRWMutex sync.RWMutex
@@ -26,7 +26,7 @@ var ItemsPerPage = 10
 var PasswordLoginEnabled = true
 var PasswordRegisterEnabled = true
 var EmailVerificationEnabled = false
-var GitHubOAuthEnabled = false
+var GitHubOAuthEnabled = true
 var WeChatAuthEnabled = false
 var TurnstileCheckEnabled = false
 var RegisterEnabled = true

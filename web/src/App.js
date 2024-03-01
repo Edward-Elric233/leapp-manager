@@ -36,7 +36,7 @@ function App() {
     const { success, data } = res.data;
     if (success) {
       console.log(
-        `GitHub 仓库地址：https://github.com/songquanpeng/gin-template`
+        `GitHub 仓库地址：https://github.com/Edward-Elric233/leapp-manager`
       );
       localStorage.setItem('status', JSON.stringify(data));
       statusDispatch({ type: 'set', payload: data });
