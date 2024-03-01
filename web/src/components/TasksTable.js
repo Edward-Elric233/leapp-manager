@@ -39,9 +39,9 @@ const TasksTable = () => {
       if (startIdx === 0) {
         setTasks(data);
       } else {
-        let newUsers = tasks;
-        newUsers.push(...data);
-        setTasks(newUsers);
+        setTasks(prevState => {
+          return [...prevState, ...data];
+        });
       }
     } else {
       showError(message);
@@ -111,7 +111,7 @@ const TasksTable = () => {
     }
   };
 
-  const searchUsers = async () => {
+  const searchTasks = async () => {
     if (searchKeyword === '') {
       // if keyword is blank, load files instead.
       await loadTasks(0);
@@ -119,7 +119,7 @@ const TasksTable = () => {
       return;
     }
     setSearching(true);
-    const res = await API.get(`/api/user/search?keyword=${searchKeyword}`);
+    const res = await API.get(`/api/task/search?keyword=${searchKeyword}`);
     const { success, message, data } = res.data;
     if (success) {
       setTasks(data);
@@ -134,28 +134,30 @@ const TasksTable = () => {
     setSearchKeyword(value.trim());
   };
 
-  const sortUser = (key) => {
+  const sortTask = (key) => {
     if (tasks.length === 0) return;
     setLoading(true);
-    let sortedUsers = [...tasks];
-    sortedUsers.sort((a, b) => {
-      return ('' + a[key]).localeCompare(b[key]);
+    setTasks(prevState => {
+      let sortedUsers = [...prevState];
+      sortedUsers.sort((a, b) => {
+        return ('' + a[key]).localeCompare(b[key]);
+      });
+      if (sortedUsers[0].id === tasks[0].id) {
+        sortedUsers.reverse();
+      }
+      return sortedUsers;
     });
-    if (sortedUsers[0].id === tasks[0].id) {
-      sortedUsers.reverse();
-    }
-    setTasks(sortedUsers);
     setLoading(false);
   };
 
   return (
     <>
-      <Form onSubmit={searchUsers}>
+      <Form onSubmit={searchTasks}>
         <Form.Input
           icon='search'
           fluid
           iconPosition='left'
-          placeholder='搜索用户的 ID，用户名，显示名称，以及邮箱地址 ...'
+          placeholder='需要搜索的任务名称/IP地址...'
           value={searchKeyword}
           loading={searching}
           onChange={handleKeywordChange}
@@ -168,42 +170,26 @@ const TasksTable = () => {
             <Table.HeaderCell
               style={{ cursor: 'pointer' }}
               onClick={() => {
-                sortUser('username');
+                sortTask('task_name');
               }}
             >
-              用户名
+              任务名称
             </Table.HeaderCell>
             <Table.HeaderCell
               style={{ cursor: 'pointer' }}
               onClick={() => {
-                sortUser('display_name');
+                sortTask('ip');
               }}
             >
-              显示名称
+              IP地址
             </Table.HeaderCell>
             <Table.HeaderCell
               style={{ cursor: 'pointer' }}
               onClick={() => {
-                sortUser('email');
+                sortTask('status');
               }}
             >
-              邮箱地址
-            </Table.HeaderCell>
-            <Table.HeaderCell
-              style={{ cursor: 'pointer' }}
-              onClick={() => {
-                sortUser('role');
-              }}
-            >
-              用户角色
-            </Table.HeaderCell>
-            <Table.HeaderCell
-              style={{ cursor: 'pointer' }}
-              onClick={() => {
-                sortUser('status');
-              }}
-            >
-              状态
+              任务状态
             </Table.HeaderCell>
             <Table.HeaderCell>操作</Table.HeaderCell>
           </Table.Row>
@@ -215,22 +201,20 @@ const TasksTable = () => {
               (activePage - 1) * ITEMS_PER_PAGE,
               activePage * ITEMS_PER_PAGE
             )
-            .map((user, idx) => {
-              if (user.deleted) return <></>;
+            .map((task, idx) => {
+              if (task.deleted) return <></>;
               return (
-                <Table.Row key={user.id}>
-                  <Table.Cell>{user.username}</Table.Cell>
-                  <Table.Cell>{user.display_name}</Table.Cell>
-                  <Table.Cell>{user.email ? user.email : '无'}</Table.Cell>
-                  <Table.Cell>{renderRole(user.role)}</Table.Cell>
-                  <Table.Cell>{renderStatus(user.status)}</Table.Cell>
+                <Table.Row key={task.id}>
+                  <Table.Cell>{task.task_name}</Table.Cell>
+                  <Table.Cell>{task.ip}</Table.Cell>
+                  <Table.Cell>{renderStatus(task.status)}</Table.Cell>
                   <Table.Cell>
                     <div>
                       <Button
                         size={'small'}
                         positive
                         onClick={() => {
-                          manageUser(user.username, 'promote', idx);
+                          manageUser(task.username, 'promote', idx);
                         }}
                       >
                         提升
@@ -239,7 +223,7 @@ const TasksTable = () => {
                         size={'small'}
                         color={'yellow'}
                         onClick={() => {
-                          manageUser(user.username, 'demote', idx);
+                          manageUser(task.username, 'demote', idx);
                         }}
                       >
                         降级
@@ -257,28 +241,28 @@ const TasksTable = () => {
                         <Button
                           negative
                           onClick={() => {
-                            manageUser(user.username, 'delete', idx);
+                            manageUser(task.username, 'delete', idx);
                           }}
                         >
-                          删除账户 {user.username}
+                          删除账户 {task.username}
                         </Button>
                       </Popup>
                       <Button
                         size={'small'}
                         onClick={() => {
                           manageUser(
-                            user.username,
-                            user.status === 1 ? 'disable' : 'enable',
+                            task.username,
+                            task.status === 1 ? 'disable' : 'enable',
                             idx
                           );
                         }}
                       >
-                        {user.status === 1 ? '禁用' : '启用'}
+                        {task.status === 1 ? '禁用' : '启用'}
                       </Button>
                       <Button
                         size={'small'}
                         as={Link}
-                        to={'/user/edit/' + user.id}
+                        to={'/user/edit/' + task.id}
                       >
                         编辑
                       </Button>
@@ -292,8 +276,8 @@ const TasksTable = () => {
         <Table.Footer>
           <Table.Row>
             <Table.HeaderCell colSpan='6'>
-              <Button size='small' as={Link} to='/user/add' loading={loading}>
-                添加新的用户
+              <Button size='small' as={Link} to='/task/add' loading={loading}>
+                新建任务
               </Button>
               <Pagination
                 floated='right'
