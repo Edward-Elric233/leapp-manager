@@ -6,3 +6,6 @@ list:
 
 build:
 	docker build -t edwardelric233/leapp-manager .
+
+push:
+	docker push edwardelric233/leapp-manager
