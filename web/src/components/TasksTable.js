@@ -12,19 +12,6 @@ import { API, showError, showSuccess } from '../helpers';
 
 import { ITEMS_PER_PAGE } from '../constants';
 
-function renderRole(role) {
-  switch (role) {
-    case 1:
-      return <Label>普通用户</Label>;
-    case 10:
-      return <Label color='yellow'>管理员</Label>;
-    case 100:
-      return <Label color='orange'>超级管理员</Label>;
-    default:
-      return <Label color='red'>未知身份</Label>;
-  }
-}
-
 const TasksTable = () => {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -33,6 +20,11 @@ const TasksTable = () => {
   const [searching, setSearching] = useState(false);
 
   const loadTasks = async (startIdx) => {
+    const data = [{task_name: "测试机器1", ip: "192.168.1.1", status: 1}]
+    setTasks(prevState => {
+      return [...prevState, ...data];
+    });
+    /*
     const res = await API.get(`/api/task/?p=${startIdx}`);
     const { success, message, data } = res.data;
     if (success) {
@@ -46,6 +38,7 @@ const TasksTable = () => {
     } else {
       showError(message);
     }
+    */
     setLoading(false);
   };
 
@@ -61,21 +54,21 @@ const TasksTable = () => {
 
   useEffect(() => {
     loadTasks(0)
-      .then()
-      .catch((reason) => {
-        showError(reason);
-      });
+        .then()
+        .catch((reason) => {
+          showError(reason);
+        });
   }, []);
 
-  const manageUser = (username, action, idx) => {
+  const manageTask = (username, action, idx) => {
     (async () => {
-      const res = await API.post('/api/user/manage', {
+      const res = await API.post('/api/task/manage', {
         username,
         action,
       });
       const { success, message } = res.data;
       if (success) {
-        showSuccess('操作成功完成！');
+        showSuccess('操作完成！');
         let user = res.data.data;
         let newUsers = [...tasks];
         let realIdx = (activePage - 1) * ITEMS_PER_PAGE + idx;
@@ -95,18 +88,24 @@ const TasksTable = () => {
   const renderStatus = (status) => {
     switch (status) {
       case 1:
-        return <Label basic>已激活</Label>;
+        return <Label basic>正在升级</Label>;
       case 2:
         return (
-          <Label basic color='red'>
-            已封禁
-          </Label>
+            <Label basic color='green'>
+              升级成功
+            </Label>
+        );
+      case 3:
+        return (
+            <Label basic color='red'>
+              升级失败
+            </Label>
         );
       default:
         return (
-          <Label basic color='grey'>
-            未知状态
-          </Label>
+            <Label basic color='grey'>
+              未开始
+            </Label>
         );
     }
   };
@@ -151,150 +150,120 @@ const TasksTable = () => {
   };
 
   return (
-    <>
-      <Form onSubmit={searchTasks}>
-        <Form.Input
-          icon='search'
-          fluid
-          iconPosition='left'
-          placeholder='需要搜索的任务名称/IP地址...'
-          value={searchKeyword}
-          loading={searching}
-          onChange={handleKeywordChange}
-        />
-      </Form>
+      <>
+        <Form onSubmit={searchTasks}>
+          <Form.Input
+              icon='search'
+              fluid
+              iconPosition='left'
+              placeholder='需要搜索的任务名称/IP地址...'
+              value={searchKeyword}
+              loading={searching}
+              onChange={handleKeywordChange}
+          />
+        </Form>
 
-      <Table basic>
-        <Table.Header>
-          <Table.Row>
-            <Table.HeaderCell
-              style={{ cursor: 'pointer' }}
-              onClick={() => {
-                sortTask('task_name');
-              }}
-            >
-              任务名称
-            </Table.HeaderCell>
-            <Table.HeaderCell
-              style={{ cursor: 'pointer' }}
-              onClick={() => {
-                sortTask('ip');
-              }}
-            >
-              IP地址
-            </Table.HeaderCell>
-            <Table.HeaderCell
-              style={{ cursor: 'pointer' }}
-              onClick={() => {
-                sortTask('status');
-              }}
-            >
-              任务状态
-            </Table.HeaderCell>
-            <Table.HeaderCell>操作</Table.HeaderCell>
-          </Table.Row>
-        </Table.Header>
+        <Table basic>
+          <Table.Header>
+            <Table.Row>
+              <Table.HeaderCell
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => {
+                    sortTask('task_name');
+                  }}
+              >
+                任务名称
+              </Table.HeaderCell>
+              <Table.HeaderCell
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => {
+                    sortTask('ip');
+                  }}
+              >
+                IP地址
+              </Table.HeaderCell>
+              <Table.HeaderCell
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => {
+                    sortTask('status');
+                  }}
+              >
+                任务状态
+              </Table.HeaderCell>
+              <Table.HeaderCell>操作</Table.HeaderCell>
+            </Table.Row>
+          </Table.Header>
 
-        <Table.Body>
-          {tasks
-            .slice(
-              (activePage - 1) * ITEMS_PER_PAGE,
-              activePage * ITEMS_PER_PAGE
-            )
-            .map((task, idx) => {
-              if (task.deleted) return <></>;
-              return (
-                <Table.Row key={task.id}>
-                  <Table.Cell>{task.task_name}</Table.Cell>
-                  <Table.Cell>{task.ip}</Table.Cell>
-                  <Table.Cell>{renderStatus(task.status)}</Table.Cell>
-                  <Table.Cell>
-                    <div>
-                      <Button
-                        size={'small'}
-                        positive
-                        onClick={() => {
-                          manageUser(task.username, 'promote', idx);
-                        }}
-                      >
-                        提升
-                      </Button>
-                      <Button
-                        size={'small'}
-                        color={'yellow'}
-                        onClick={() => {
-                          manageUser(task.username, 'demote', idx);
-                        }}
-                      >
-                        降级
-                      </Button>
-                      <Popup
-                        trigger={
-                          <Button size='small' negative>
-                            删除
-                          </Button>
-                        }
-                        on='click'
-                        flowing
-                        hoverable
-                      >
-                        <Button
-                          negative
-                          onClick={() => {
-                            manageUser(task.username, 'delete', idx);
-                          }}
-                        >
-                          删除账户 {task.username}
-                        </Button>
-                      </Popup>
-                      <Button
-                        size={'small'}
-                        onClick={() => {
-                          manageUser(
-                            task.username,
-                            task.status === 1 ? 'disable' : 'enable',
-                            idx
-                          );
-                        }}
-                      >
-                        {task.status === 1 ? '禁用' : '启用'}
-                      </Button>
-                      <Button
-                        size={'small'}
-                        as={Link}
-                        to={'/user/edit/' + task.id}
-                      >
-                        编辑
-                      </Button>
-                    </div>
-                  </Table.Cell>
-                </Table.Row>
-              );
-            })}
-        </Table.Body>
+          <Table.Body>
+            {tasks
+                .slice(
+                    (activePage - 1) * ITEMS_PER_PAGE,
+                    activePage * ITEMS_PER_PAGE
+                )
+                .map((task, idx) => {
+                  if (task.deleted) return <></>;
+                  return (
+                      <Table.Row key={task.id}>
+                        <Table.Cell>{task.task_name}</Table.Cell>
+                        <Table.Cell>{task.ip}</Table.Cell>
+                        <Table.Cell>{renderStatus(task.status)}</Table.Cell>
+                        <Table.Cell>
+                          <div>
+                            {
+                              //TODO: 操作： 对于不是正在升级的任务， 可以从数据库中删除
+                            }
+                            <Popup
+                                trigger={
+                                  <Button size='small' negative>
+                                    删除
+                                  </Button>
+                                }
+                                on='click'
+                                flowing
+                                hoverable
+                            >
+                            </Popup>
+                            <Button
+                                size={'small'}
+                                onClick={() => {
+                                  manageTask(
+                                      task.username,
+                                      task.status === 1 ? 'disable' : 'enable',
+                                      idx
+                                  );
+                                }}
+                            >
+                              {task.status === 1 ? '停止' : '开始'}
+                            </Button>
+                          </div>
+                        </Table.Cell>
+                      </Table.Row>
+                  );
+                })}
+          </Table.Body>
 
-        <Table.Footer>
-          <Table.Row>
-            <Table.HeaderCell colSpan='6'>
-              <Button size='small' as={Link} to='/task/add' loading={loading}>
-                新建任务
-              </Button>
-              <Pagination
-                floated='right'
-                activePage={activePage}
-                onPageChange={onPaginationChange}
-                size='small'
-                siblingRange={1}
-                totalPages={
-                  Math.ceil(tasks.length / ITEMS_PER_PAGE) +
-                  (tasks.length % ITEMS_PER_PAGE === 0 ? 1 : 0)
-                }
-              />
-            </Table.HeaderCell>
-          </Table.Row>
-        </Table.Footer>
-      </Table>
-    </>
+          <Table.Footer>
+            <Table.Row>
+              <Table.HeaderCell colSpan='6'>
+                <Button size='small' as={Link} to='/task/add' loading={loading}>
+                  新建任务
+                </Button>
+                <Pagination
+                    floated='right'
+                    activePage={activePage}
+                    onPageChange={onPaginationChange}
+                    size='small'
+                    siblingRange={1}
+                    totalPages={
+                        Math.ceil(tasks.length / ITEMS_PER_PAGE) +
+                        (tasks.length % ITEMS_PER_PAGE === 0 ? 1 : 0)
+                    }
+                />
+              </Table.HeaderCell>
+            </Table.Row>
+          </Table.Footer>
+        </Table>
+      </>
   );
 };
 

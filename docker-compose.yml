@@ -1,0 +1,12 @@
+services:
+  leapp-manager:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: edwardelric233/leapp-manager
+    container_name: leapp-manager
+    ports:
+      - "3000:3000"
+    volumes:
+      - "D:/Code/web/leapp-manager/data:/data"
+    restart: always
