@@ -2,9 +2,9 @@ package controller
 
 import (
 	"encoding/json"
-	"gin-template/common"
-	"gin-template/model"
 	"github.com/gin-gonic/gin"
+	"leapp-manager/common"
+	"leapp-manager/model"
 	"net/http"
 	"strings"
 )

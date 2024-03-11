@@ -2,9 +2,9 @@ package controller
 
 import (
 	"fmt"
-	"gin-template/common"
-	"gin-template/model"
 	"github.com/gin-gonic/gin"
+	"leapp-manager/common"
+	"leapp-manager/model"
 	"net/http"
 	"path/filepath"
 	"strconv"

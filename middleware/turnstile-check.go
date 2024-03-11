@@ -2,9 +2,9 @@ package middleware
 
 import (
 	"encoding/json"
-	"gin-template/common"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"leapp-manager/common"
 	"net/http"
 	"net/url"
 )

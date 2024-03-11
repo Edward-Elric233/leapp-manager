@@ -1,7 +1,7 @@
 package model
 
 import (
-	"gin-template/common"
+	"leapp-manager/common"
 	"strconv"
 	"strings"
 )

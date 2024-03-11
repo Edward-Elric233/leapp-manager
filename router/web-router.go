@@ -2,11 +2,11 @@ package router
 
 import (
 	"embed"
-	"gin-template/common"
-	"gin-template/controller"
-	"gin-template/middleware"
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
+	"leapp-manager/common"
+	"leapp-manager/controller"
+	"leapp-manager/middleware"
 	"net/http"
 )
 

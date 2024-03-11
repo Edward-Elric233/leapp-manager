@@ -1,9 +1,9 @@
 package router
 
 import (
-	"gin-template/controller"
-	"gin-template/middleware"
 	"github.com/gin-gonic/gin"
+	"leapp-manager/controller"
+	"leapp-manager/middleware"
 )
 
 func SetApiRouter(router *gin.Engine) {

@@ -1,10 +1,10 @@
 package model
 
 import (
-	"gin-template/common"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"leapp-manager/common"
 	"os"
 )
 

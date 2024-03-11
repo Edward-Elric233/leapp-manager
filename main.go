@@ -2,14 +2,14 @@ package main
 
 import (
 	"embed"
-	"gin-template/common"
-	"gin-template/middleware"
-	"gin-template/model"
-	"gin-template/router"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
+	"leapp-manager/common"
+	"leapp-manager/middleware"
+	"leapp-manager/model"
+	"leapp-manager/router"
 	"log"
 	"os"
 	"strconv"

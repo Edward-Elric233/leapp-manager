@@ -2,11 +2,11 @@ package controller
 
 import (
 	"encoding/json"
-	"gin-template/common"
-	"gin-template/model"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"leapp-manager/common"
+	"leapp-manager/model"
 	"net/http"
 	"strconv"
 	"strings"
