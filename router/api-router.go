@@ -48,6 +48,17 @@ func SetApiRouter(router *gin.Engine) {
 				adminRoute.DELETE("/:id", controller.DeleteUser)
 			}
 		}
+
+		taskRoute := apiRouter.Group("/task")
+		{
+			taskRoute.GET("/", controller.GetAllTasks)
+			taskRoute.GET("/search", controller.SearchTasks)
+			taskRoute.GET("/:id", controller.GetTask)
+			taskRoute.POST("/", controller.CreateTask)
+			taskRoute.DELETE("/:id", controller.DeleteTask)
+			//TODO: PUT manage
+		}
+
 		optionRoute := apiRouter.Group("/option")
 		optionRoute.Use(middleware.RootAuth(), middleware.NoTokenAuth())
 		{

@@ -8,9 +8,8 @@ import {
   Table,
 } from 'semantic-ui-react';
 import { Link } from 'react-router-dom';
-import { API, showError, showSuccess } from '../helpers';
-
-import { ITEMS_PER_PAGE } from '../constants';
+import {API, showError, showSuccess, showWarning} from '../helpers';
+import {ITEMS_PER_PAGE, taskConstants} from '../constants';
 
 const TasksTable = () => {
   const [tasks, setTasks] = useState([]);
@@ -20,11 +19,12 @@ const TasksTable = () => {
   const [searching, setSearching] = useState(false);
 
   const loadTasks = async (startIdx) => {
+    /*
     const data = [{task_name: "测试机器1", ip: "192.168.1.1", status: 1}]
     setTasks(prevState => {
       return [...prevState, ...data];
     });
-    /*
+    */
     const res = await API.get(`/api/task/?p=${startIdx}`);
     const { success, message, data } = res.data;
     if (success) {
@@ -38,7 +38,6 @@ const TasksTable = () => {
     } else {
       showError(message);
     }
-    */
     setLoading(false);
   };
 
@@ -60,30 +59,6 @@ const TasksTable = () => {
         });
   }, []);
 
-  const manageTask = (username, action, idx) => {
-    (async () => {
-      const res = await API.post('/api/task/manage', {
-        username,
-        action,
-      });
-      const { success, message } = res.data;
-      if (success) {
-        showSuccess('操作完成！');
-        let user = res.data.data;
-        let newUsers = [...tasks];
-        let realIdx = (activePage - 1) * ITEMS_PER_PAGE + idx;
-        if (action === 'delete') {
-          newUsers[realIdx].deleted = true;
-        } else {
-          newUsers[realIdx].status = user.status;
-          newUsers[realIdx].role = user.role;
-        }
-        setTasks(newUsers);
-      } else {
-        showError(message);
-      }
-    })();
-  };
 
   const renderStatus = (status) => {
     switch (status) {
@@ -149,6 +124,28 @@ const TasksTable = () => {
     setLoading(false);
   };
 
+  const deleteTask = (task_id, task_status, idx) => {
+    const {taskStatus} = taskConstants
+    if (taskStatus[task_status] === "run") {
+      showWarning("升级任务正在执行，无法删除")
+      return
+    }
+    (async () => {
+      const res = await  API.delete(`/api/task/${task_id}`);
+      const { success, message } = res.data;
+      if (success) {
+        showSuccess(message);
+        let realIdx = (activePage - 1) * ITEMS_PER_PAGE + idx;
+        setTasks(prevState => {
+          prevState[realIdx].deleted = true;
+          return [...prevState]
+        })
+      } else {
+        showError(message);
+      }
+    })()
+  }
+
   return (
       <>
         <Form onSubmit={searchTasks}>
@@ -209,31 +206,19 @@ const TasksTable = () => {
                         <Table.Cell>{renderStatus(task.status)}</Table.Cell>
                         <Table.Cell>
                           <div>
-                            {
-                              //TODO: 操作： 对于不是正在升级的任务， 可以从数据库中删除
-                            }
-                            <Popup
-                                trigger={
-                                  <Button size='small' negative>
-                                    删除
-                                  </Button>
-                                }
-                                on='click'
-                                flowing
-                                hoverable
-                            >
-                            </Popup>
                             <Button
                                 size={'small'}
+                                //TODO: 跳转到操作任务界面
+                            >
+                              查看
+                            </Button>
+                            <Button
+                                size={'small'} negative
                                 onClick={() => {
-                                  manageTask(
-                                      task.username,
-                                      task.status === 1 ? 'disable' : 'enable',
-                                      idx
-                                  );
+                                  deleteTask(task.id, task.status, idx);
                                 }}
                             >
-                              {task.status === 1 ? '停止' : '开始'}
+                              删除
                             </Button>
                           </div>
                         </Table.Cell>

@@ -130,7 +130,7 @@ func DeleteFile(c *gin.Context) {
 	err = fileObj.Delete()
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
-			"success": true,
+			"success": false,
 			"message": err.Error(),
 		})
 		return
