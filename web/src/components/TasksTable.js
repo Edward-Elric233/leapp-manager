@@ -208,7 +208,8 @@ const TasksTable = () => {
                           <div>
                             <Button
                                 size={'small'}
-                                //TODO: 跳转到操作任务界面
+                                as={Link}
+                                to={`/task/${task.id}`}
                             >
                               查看
                             </Button>

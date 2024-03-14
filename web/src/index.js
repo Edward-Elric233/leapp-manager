@@ -19,7 +19,7 @@ root.render(
       <UserProvider>
         <BrowserRouter>
           <Header />
-          <Container className={'main-content'}>
+          <Container className={'main-content'} style={{ minHeight: '90vh' }}>
             <App />
           </Container>
           <ToastContainer />

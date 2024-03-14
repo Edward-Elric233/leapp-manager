@@ -18,6 +18,7 @@ import {StatusContext} from './context/Status';
 import File from './pages/File';
 import Task from "./pages/Task";
 import AddTask from "./pages/Task/AddTask";
+import TaskDetails from "./pages/Task/TaskDetails";
 
 const Home = lazy(() => import('./pages/Home'));
 const About = lazy(() => import('./pages/About'));
@@ -82,7 +83,6 @@ function App() {
                     </PrivateRoute>
                 }
             />
-
             <Route
                 path='/task'
                 element={
@@ -94,9 +94,21 @@ function App() {
             <Route
                 path='/task/add'
                 element={
-                    <Suspense fallback={<Loading></Loading>}>
-                        <AddTask/>
-                    </Suspense>
+                    <PrivateRoute>
+                        <Suspense fallback={<Loading></Loading>}>
+                            <AddTask/>
+                        </Suspense>
+                    </PrivateRoute>
+                }
+            />
+            <Route
+                path='/task/:id'
+                element={
+                    <PrivateRoute>
+                        <Suspense fallback={<Loading></Loading>}>
+                            <TaskDetails/>
+                        </Suspense>
+                    </PrivateRoute>
                 }
             />
             <Route

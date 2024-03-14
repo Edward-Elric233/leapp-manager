@@ -10,7 +10,7 @@ const Task = () => {
     //TODO: refactor
     return (<>
         <Container>
-            <Segment padded='very' textAlign='center' style={{ minHeight: '90vh' }}>
+            <Segment padded='very' textAlign='center' >
                 <Header as='h2' icon>
                     <img
                         src='/logo.png'

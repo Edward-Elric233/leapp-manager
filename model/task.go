@@ -10,6 +10,7 @@ type Task struct {
 	Ip       string `json:"ip" gorm:"unique;index" validate:"min=7,max=15"`
 	Port     int    `json:"port" gorm:"type:int;default:22"` //ssh端口号
 	Status   int    `json:"status" gorm:"type:int"`          //0-未开始 1-正在升级 2-升级成功 3-升级失败
+	Info     int    `json:"info" gorm:"type:text"`           //存储升级日志
 	//TODO: creator 根据创建者进行筛选
 }
 
@@ -38,7 +39,7 @@ func GetTaskById(id int, selectAll bool) (*Task, error) {
 	if selectAll {
 		err = DB.First(&task, "id = ?", id).Error
 	} else {
-		err = DB.Select([]string{"id", "task_name", "ip", "port", "status"}).First(&task, "id = ?", id).Error
+		err = DB.Select([]string{"id", "task_name", "ip", "port", "status", "info"}).First(&task, "id = ?", id).Error
 	}
 	return &task, err
 }
