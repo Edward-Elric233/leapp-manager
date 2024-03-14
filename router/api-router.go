@@ -55,6 +55,7 @@ func SetApiRouter(router *gin.Engine) {
 			taskRoute.GET("/search", controller.SearchTasks)
 			taskRoute.GET("/:id", controller.GetTask)
 			taskRoute.POST("/", controller.CreateTask)
+			taskRoute.POST("/:id", controller.StartTask)
 			taskRoute.DELETE("/:id", controller.DeleteTask)
 			//TODO: PUT manage
 		}

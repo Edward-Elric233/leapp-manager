@@ -122,3 +122,48 @@ func CreateTask(c *gin.Context) {
 }
 
 //TODO: func UpdateTask
+
+func StartTask(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	task, err := model.GetTaskById(id, false)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	//TODO: 将用户名和密码放入数据库，需要用户输入
+	username := "root"
+	password := "Tlinux12#$"
+	command := "cat /etc/os-release"
+	// 执行命令
+	output, err := common.ExecuteRemoteCommand(command, task.Ip, strconv.Itoa(task.Port), username, password)
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+
+	//连接成功
+	task.Status = common.TaskRun
+	task.Info = output
+	err = task.Update()
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "",
+		"data":    task,
+	})
+	return
+}

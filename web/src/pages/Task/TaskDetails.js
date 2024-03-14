@@ -36,9 +36,9 @@ const TaskDetails = () => {
     const handleStartUpgrade = async () => {
         try {
             const res = await API.post(`/api/task/${task.id}`);
-            const { success, message } = res.data;
+            const { success, message, data } = res.data;
             if (success) {
-                setTask({ ...task, task_status: 1 });
+                setTask(data);
             } else {
                 showError(message);
             }

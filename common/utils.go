@@ -1,8 +1,10 @@
 package common
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/google/uuid"
+	"golang.org/x/crypto/ssh"
 	"html/template"
 	"log"
 	"net"
@@ -138,4 +140,46 @@ func Max(a int, b int) int {
 	} else {
 		return b
 	}
+}
+
+// 连接到SSH服务器并执行命令的函数
+func ExecuteRemoteCommand(command, hostname, port, username, password string) (string, error) {
+	// 设置SSH客户端配置
+	config := &ssh.ClientConfig{
+		User: username,
+		Auth: []ssh.AuthMethod{
+			ssh.Password(password),
+		},
+		// 非生产环境可以使用不安全的HostKeyCallback
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+	}
+
+	// 拼接地址
+	address := hostname + ":" + port
+
+	// 连接到SSH服务器
+	client, err := ssh.Dial("tcp", address, config)
+	if err != nil {
+		return "", err
+	}
+	defer client.Close()
+
+	// 创建会话
+	session, err := client.NewSession()
+	if err != nil {
+		return "", err
+	}
+	defer session.Close()
+
+	// 执行命令
+	var stdout, stderr bytes.Buffer
+	session.Stdout = &stdout
+	session.Stderr = &stderr
+	err = session.Run(command)
+	if err != nil {
+		return stderr.String(), err
+	}
+
+	// 返回命令输出
+	return stdout.String(), nil
 }
