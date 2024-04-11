@@ -3,8 +3,10 @@ package controller
 import (
 	"encoding/json"
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 	"leapp-manager/common"
 	"leapp-manager/model"
+	"log"
 	"net/http"
 	"strconv"
 )
@@ -154,6 +156,17 @@ func StartTask(c *gin.Context) {
 	//连接成功
 	task.Status = common.TaskRun
 	task.Info = output
+
+	//TODO: run shell script
+	command = "dnf install git -y && git clone https://gitee.com/EdwardElric233/leapp-repository.git && cd leapp-repository && bash run.sh"
+	// 执行命令
+	output, err = common.ExecuteRemoteCommand(command, task.Ip, strconv.Itoa(task.Port), username, password)
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+
+	task.Info += "\n开始升级"
 	err = task.Update()
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
@@ -165,5 +178,67 @@ func StartTask(c *gin.Context) {
 		"message": "",
 		"data":    task,
 	})
+
 	return
+}
+
+var wsupgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+}
+
+var task2websocket = make(map[int]*websocket.Conn)
+
+func RegisterWebSocket(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	conn, err := wsupgrader.Upgrade(c.Writer, c.Request, nil)
+	if err != nil {
+		log.Printf("Failed to set websocket upgrade: %v", err)
+		return
+	}
+	//defer conn.Close()  -> in removeWebSocket
+	task2websocket[id] = conn
+
+	err = conn.WriteMessage(websocket.TextMessage, []byte("Socket has been created"))
+	if err != nil {
+		log.Printf("Failed to send message: %v", err)
+		return
+	}
+
+	// 处理 WebSocket 连接
+	//for {
+	//	t, msg, err := conn.ReadMessage()
+	//	if err != nil {
+	//		break
+	//	}
+	//	log.Printf("Received message: %s", msg)
+	//	err = conn.WriteMessage(t, msg)
+	//	if err != nil {
+	//		break
+	//	}
+	//}
+}
+
+func RemoveWebSocket(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	conn, ok := task2websocket[id]
+	if !ok {
+		log.Printf("Failed to get websocket for task %d: %v", id, err)
+		return
+	}
+	defer conn.Close()
 }

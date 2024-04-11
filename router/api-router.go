@@ -58,6 +58,8 @@ func SetApiRouter(router *gin.Engine) {
 			taskRoute.POST("/:id", controller.StartTask)
 			taskRoute.DELETE("/:id", controller.DeleteTask)
 			//TODO: PUT manage
+			taskRoute.GET("/ws/:id", controller.RegisterWebSocket)
+			taskRoute.DELETE("/ws/:id", controller.RemoveWebSocket)
 		}
 
 		optionRoute := apiRouter.Group("/option")

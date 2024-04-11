@@ -127,8 +127,9 @@ const TasksTable = () => {
   const deleteTask = (task_id, task_status, idx) => {
     const {taskStatus} = taskConstants
     if (taskStatus[task_status] === "run") {
-      showWarning("升级任务正在执行，无法删除")
-      return
+      //TODO: for debug
+      //showWarning("升级任务正在执行，无法删除")
+      //return
     }
     (async () => {
       const res = await  API.delete(`/api/task/${task_id}`);

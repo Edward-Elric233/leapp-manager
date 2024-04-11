@@ -1,11 +1,13 @@
 package common
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/ssh"
 	"html/template"
+	"io"
 	"log"
 	"net"
 	"os/exec"
@@ -182,4 +184,66 @@ func ExecuteRemoteCommand(command, hostname, port, username, password string) (s
 
 	// 返回命令输出
 	return stdout.String(), nil
+}
+
+// 连接到SSH服务器并执行命令，实时获取命令的输出
+// 需要传入一个回调，用来处理实时输出
+func ExecuteRemoteCommandRT(command, hostname, port, username, password string, deal func(string)) error {
+	// 设置SSH客户端配置
+	config := &ssh.ClientConfig{
+		User: username,
+		Auth: []ssh.AuthMethod{
+			ssh.Password(password),
+		},
+		// 非生产环境可以使用不安全的HostKeyCallback
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+	}
+
+	// 拼接地址
+	address := hostname + ":" + port
+
+	// 连接到SSH服务器
+	client, err := ssh.Dial("tcp", address, config)
+	if err != nil {
+		return err
+	}
+	defer client.Close()
+
+	// 创建会话
+	session, err := client.NewSession()
+	if err != nil {
+		return err
+	}
+	defer session.Close()
+
+	// 执行命令
+	stdout, err := session.StdoutPipe()
+	if err != nil {
+		return err
+	}
+
+	err = session.Start(command)
+	if err != nil {
+		return err
+	}
+
+	reader := bufio.NewReader(stdout)
+	for {
+		line, err := reader.ReadString('\n')
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			log.Printf("Failed to read line: %v", err)
+			break
+		}
+		// 在这里处理读到的每一行日志
+		deal(line)
+	}
+
+	err = session.Wait()
+	if err != nil {
+		return err
+	}
+	return nil
 }

@@ -8,6 +8,7 @@ import {taskConstants} from "../../constants";
 
 const TaskDetails = () => {
     const [task, setTask] = useState(null);
+    const [log, setLog] = useState("升级日志");
     const [loading, setLoading] = useState(true);
     const params = useParams()
     const id = params.id
@@ -27,10 +28,37 @@ const TaskDetails = () => {
             setLoading(false);
         }
     };
+    let socket;
+    const registerSocket = async () => {
+        try {
+            socket = new WebSocket(`ws://localhost:3000/api/task/ws/${id}`);
+            socket.onmessage = (event) => {
+                const logContent = event.data;
+                setLog(log => log + logContent);
+            };
+        } catch (error) {
+            showError(error.message);
+        }
+    }
+    const removeSocket = async () => {
+        try {
+            const res = await API.delete(`/api/task/ws/${id}`);
+            const { success, message, data } = res.data;
+            if (success) {
+            } else {
+                showError(message);
+            }
+        } catch (error) {
+            showError(error.message);
+        }
+    }
     useEffect(() => {
-        fetchTask()
-            .then()
-            .catch(reason => showError(reason))
+        fetchTask().then()
+        registerSocket().then()
+        return () => {
+            socket.close()
+            removeSocket().then()
+        }
     }, [id]);
 
     const handleStartUpgrade = async () => {
@@ -89,6 +117,14 @@ const TaskDetails = () => {
                 <TextArea
                     placeholder='升级详情将显示在这里...'
                     value={task.info}
+                    style={{ minHeight: '20vh' }}
+                    readOnly
+                />
+            </Form>
+            <Form>
+                <TextArea
+                    placeholder='升级日志将显示在这里...'
+                    value={log}
                     style={{ minHeight: '50vh' }}
                     readOnly
                 />
