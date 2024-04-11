@@ -2,13 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Button, Form, TextArea, Segment, Container, Header} from 'semantic-ui-react';
 import {API, showError, showSuccess, showWarning} from '../../helpers';
 import {useParams} from "react-router-dom";
+import { List, AutoSizer } from 'react-virtualized';
 import Loading from "../../components/Loading";
 import NotFound from "../NotFound";
 import {taskConstants} from "../../constants";
 
 const TaskDetails = () => {
     const [task, setTask] = useState(null);
-    const [log, setLog] = useState("升级日志");
+    // const [log, setLog] = useState("");
+    const [log, setLog] = useState([]);
     const [loading, setLoading] = useState(true);
     const params = useParams()
     const id = params.id
@@ -34,7 +36,9 @@ const TaskDetails = () => {
             socket = new WebSocket(`ws://localhost:3000/api/task/ws/${id}`);
             socket.onmessage = (event) => {
                 const logContent = event.data;
-                setLog(log => log + logContent);
+                const logLines = logContent.split('\n');
+                setLog((prevLog) => [...prevLog, ...logLines]);
+                // setLog(prevLog => prevLog + logContent);
             };
         } catch (error) {
             showError(error.message);
@@ -96,6 +100,15 @@ const TaskDetails = () => {
         default:
             buttonName = "已结束"
     }
+    const renderLog = ({ index, key, style }) => (
+        <div
+            key={key}
+            style={{...style, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}
+            title={log[index]}
+        >
+            {log[index]}
+        </div>
+    );
 
     return (
         <Container>
@@ -117,17 +130,34 @@ const TaskDetails = () => {
                 <TextArea
                     placeholder='升级详情将显示在这里...'
                     value={task.info}
-                    style={{ minHeight: '20vh' }}
+                    style={{minHeight: '20vh'}}
                     readOnly
                 />
             </Form>
-            <Form>
-                <TextArea
-                    placeholder='升级日志将显示在这里...'
-                    value={log}
-                    style={{ minHeight: '50vh' }}
-                    readOnly
-                />
+            <Header as='h3' attached='top' block>
+                升级日志
+            </Header>
+            {/*<Form>*/}
+            {/*    <TextArea*/}
+            {/*        placeholder='升级日志将显示在这里...'*/}
+            {/*        value={log}*/}
+            {/*        style={{minHeight: '50vh'}}*/}
+            {/*        readOnly*/}
+            {/*    />*/}
+            {/*</Form>*/}
+            <Form style={{height: '50vh', width: '100%'}}>
+                <AutoSizer>
+                    {({height, width}) => (
+                        <List
+                            height={height}
+                            width={width}
+                            rowCount={log.length}
+                            rowHeight={20}
+                            rowRenderer={renderLog}
+                            scrollToIndex={log.length - 1}
+                        />
+                    )}
+                </AutoSizer>
             </Form>
         </Container>
     );

@@ -52,11 +52,7 @@ const TasksTable = () => {
   };
 
   useEffect(() => {
-    loadTasks(0)
-        .then()
-        .catch((reason) => {
-          showError(reason);
-        });
+    loadTasks(0).then()
   }, []);
 
 

@@ -2,6 +2,7 @@ package controller
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"leapp-manager/common"
@@ -157,15 +158,6 @@ func StartTask(c *gin.Context) {
 	task.Status = common.TaskRun
 	task.Info = output
 
-	//TODO: run shell script
-	command = "dnf install git -y && git clone https://gitee.com/EdwardElric233/leapp-repository.git && cd leapp-repository && bash run.sh"
-	// 执行命令
-	output, err = common.ExecuteRemoteCommand(command, task.Ip, strconv.Itoa(task.Port), username, password)
-	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
-		return
-	}
-
 	task.Info += "\n开始升级"
 	err = task.Update()
 	if err != nil {
@@ -178,6 +170,39 @@ func StartTask(c *gin.Context) {
 		"message": "",
 		"data":    task,
 	})
+
+	go func() {
+		command = "dnf install git -y && rm leapp-repository -rf && git clone https://gitee.com/EdwardElric233/leapp-repository.git && cd leapp-repository && bash run.sh&"
+		// 执行命令
+		output, err = common.ExecuteRemoteCommand(command, task.Ip, strconv.Itoa(task.Port), username, password)
+		if err != nil {
+			log.Printf("Failed to run leapp command for task %d: %v", id, err)
+			return
+		}
+	}()
+
+	go func() {
+		conn, ok := task2websocket[id]
+		if !ok {
+			log.Printf("Failed to get websocket for task %d: %v", id, err)
+			return
+		}
+		deal := func(msg string) {
+			err := conn.WriteMessage(websocket.TextMessage, []byte(msg))
+			if err != nil {
+				log.Printf("Failed to send message: %v", err)
+				return
+			}
+		}
+		//TODO: 持久化log，这样即使退出页面再次进来还能获取以前的输出
+		logFile := "/var/log/leapp/leapp-upgrade-stdout.log"
+		command := fmt.Sprintf("while ! [ -f  %s ]; do sleep 1; done && tail -f %s", logFile, logFile)
+		err = common.ExecuteRemoteCommandRT(command, task.Ip, strconv.Itoa(task.Port), username, password, deal)
+		if err != nil {
+			log.Printf("Failed to update log: %v", err)
+			return
+		}
+	}()
 
 	return
 }
@@ -236,9 +261,13 @@ func RemoveWebSocket(c *gin.Context) {
 		return
 	}
 	conn, ok := task2websocket[id]
+	defer conn.Close()
 	if !ok {
 		log.Printf("Failed to get websocket for task %d: %v", id, err)
 		return
 	}
-	defer conn.Close()
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "",
+	})
 }

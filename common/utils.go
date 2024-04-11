@@ -188,7 +188,7 @@ func ExecuteRemoteCommand(command, hostname, port, username, password string) (s
 
 // 连接到SSH服务器并执行命令，实时获取命令的输出
 // 需要传入一个回调，用来处理实时输出
-func ExecuteRemoteCommandRT(command, hostname, port, username, password string, deal func(string)) error {
+func ExecuteRemoteCommandRT(command, hostname, port, username, password string, callback func(string)) error {
 	// 设置SSH客户端配置
 	config := &ssh.ClientConfig{
 		User: username,
@@ -227,6 +227,10 @@ func ExecuteRemoteCommandRT(command, hostname, port, username, password string, 
 		return err
 	}
 
+	var cachedLines string
+	cnt := 0
+	const kLen = 2
+
 	reader := bufio.NewReader(stdout)
 	for {
 		line, err := reader.ReadString('\n')
@@ -237,9 +241,18 @@ func ExecuteRemoteCommandRT(command, hostname, port, username, password string, 
 			log.Printf("Failed to read line: %v", err)
 			break
 		}
-		// 在这里处理读到的每一行日志
-		deal(line)
+		// 在这里处理读到日志
+		// 每kLen行发送一次，否则发送频率实在太高
+		cachedLines += line
+		cnt++
+		if cnt >= kLen {
+			callback(cachedLines)
+			cnt = 0
+			cachedLines = ""
+		}
 	}
+
+	callback(cachedLines)
 
 	err = session.Wait()
 	if err != nil {
