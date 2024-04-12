@@ -146,7 +146,12 @@ func StartTask(c *gin.Context) {
 	//TODO: 将用户名和密码放入数据库，需要用户输入
 	username := "root"
 	password := "Tlinux12#$"
-	command := "cat /etc/os-release"
+
+	//TODO: 在系统配置中设置SERVER_IP
+	//环境变量位置需要和leapp-repository项目约定
+	serverIp := "192.168.174.1"
+	serverPort := 3000
+	command := fmt.Sprintf("echo -e \"SERVER_IP=%s\\nSERVER_PORT=%d\\nTASK_ID=%d\" | sudo tee /root/.leapp.env > /dev/null && cat /etc/os-release && uname -r", serverIp, serverPort, id)
 	// 执行命令
 	output, err := common.ExecuteRemoteCommand(command, task.Ip, strconv.Itoa(task.Port), username, password)
 	if err != nil {
@@ -181,10 +186,11 @@ func StartTask(c *gin.Context) {
 		}
 	}()
 
+	//TODO: 放入RegisterWebSocket以实现即使用户退出页面，再进来也能看到日志
 	go func() {
 		conn, ok := task2websocket[id]
 		if !ok {
-			log.Printf("Failed to get websocket for task %d: %v", id, err)
+			log.Printf("Failed to get websocket for task %d", id)
 			return
 		}
 		deal := func(msg string) {
@@ -207,12 +213,66 @@ func StartTask(c *gin.Context) {
 	return
 }
 
+//TODO: 检测升级任务失败
+
+func FinishTask(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	task, err := model.GetTaskById(id, false)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+
+	//升级成功
+	task.Status = common.TaskSuccess
+
+	task.Info += "\n升级成功\n"
+	err = task.Update()
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "",
+		"data":    task,
+	})
+
+	write2WebSocket(id, "upgrade success!!!")
+
+	return
+}
+
 var wsupgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 }
 
 var task2websocket = make(map[int]*websocket.Conn)
+
+func write2WebSocket(id int, msg string) {
+	conn, ok := task2websocket[id]
+	if !ok {
+		log.Printf("Failed to get websocket for task %d", id)
+		return
+	}
+	err := conn.WriteMessage(websocket.TextMessage, []byte(msg))
+	if err != nil {
+		log.Printf("Failed to send message: %v", err)
+		return
+	}
+}
 
 func RegisterWebSocket(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
@@ -263,7 +323,7 @@ func RemoveWebSocket(c *gin.Context) {
 	conn, ok := task2websocket[id]
 	defer conn.Close()
 	if !ok {
-		log.Printf("Failed to get websocket for task %d: %v", id, err)
+		log.Printf("Failed to get websocket for task %d", id)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{

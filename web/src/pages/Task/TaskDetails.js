@@ -35,7 +35,16 @@ const TaskDetails = () => {
         try {
             socket = new WebSocket(`ws://localhost:3000/api/task/ws/${id}`);
             socket.onmessage = (event) => {
-                const logContent = event.data;
+                const logContent = event.data.trim();
+
+                if (logContent === 'upgrade success!!!') {
+                    setTask(preTask => ({
+                        ...preTask,
+                        //TODO: hard code, should consider
+                        status: 2,
+                    }))
+                }
+
                 const logLines = logContent.split('\n');
                 setLog((prevLog) => [...prevLog, ...logLines]);
                 // setLog(prevLog => prevLog + logContent);
@@ -97,8 +106,11 @@ const TaskDetails = () => {
         case "run":
             buttonName = "升级中";
             break;
+        case "success":
+            buttonName = "升级成功";
+            break;
         default:
-            buttonName = "已结束"
+            buttonName = "升级失败"
     }
     const renderLog = ({ index, key, style }) => (
         <div
