@@ -177,7 +177,7 @@ func StartTask(c *gin.Context) {
 	})
 
 	go func() {
-		command = "dnf install git -y && rm leapp-repository -rf && git clone https://gitee.com/EdwardElric233/leapp-repository.git && cd leapp-repository && bash run.sh&"
+		command = "dnf install git -y && rm leapp-repository -rf && git clone https://github.com/Edward-Elric233/leapp-repository.git && cd leapp-repository && bash run.sh&"
 		// 执行命令
 		output, err = common.ExecuteRemoteCommand(command, task.Ip, strconv.Itoa(task.Port), username, password)
 		if err != nil {
